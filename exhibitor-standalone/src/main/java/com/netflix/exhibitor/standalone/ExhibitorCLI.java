@@ -78,6 +78,7 @@ public class ExhibitorCLI
     public static final String AZURE_CREDENTIALS = "azurecredentials";
     public static final String AZURE_CONFIG = "azureconfig";
     public static final String GCS_CREDENTIALS = "gcscredentials";
+    public static final String GCS_PROJECT_ID = "gcsprojectid";
     public static final String GCS_CONFIG = "gcsconfig";
     public static final String GCS_CONFIG_PREFIX = "gcsconfigprefix";
     public static final String ZOOKEEPER_CONFIG_INITIAL_CONNECT_STRING = "zkconfigconnect";
@@ -182,7 +183,8 @@ public class ExhibitorCLI
         azureOptions.addOption(null, AZURE_CREDENTIALS, true, "Optional credentials to use for azureconfig. Argument is the path to an Azure credential properties file with two properties: " + PropertyBasedAzureCredential.PROPERTY_AZURE_ACCOUNT_NAME + " and " + PropertyBasedAzureCredential.PROPERTY_AZURE_ACCOUNT_KEY);
 
         Options gcsOptions = new Options();
-        gcsOptions.addOption(null, GCS_CREDENTIALS, true, "Optional credentials to use for gcsconfig. Argument is the path to an Google Cloud Storage credential properties file with three properties: " + PropertyBasedGcsCredential.PROPERTY_GCS_ACCOUNT_EMAIL + ", " + PropertyBasedGcsCredential.PROPERTY_GCS_ACCOUNT_ID + ", and " + PropertyBasedGcsCredential.PROPERTY_GCS_PRIVATE_KEY_PATH);
+        gcsOptions.addOption(null, GCS_CREDENTIALS, true, "Optional credentials to use for gcsconfig. Argument is the path to a Google Cloud key.json");
+        gcsOptions.addOption(null, GCS_PROJECT_ID, true, "Google cloud project (gcsprojectid) for storage client");
 
         generalOptions = new Options();
         generalOptions.addOption(null, TIMEOUT, true, "Connection timeout (ms) for ZK connections. Default is 30000.");

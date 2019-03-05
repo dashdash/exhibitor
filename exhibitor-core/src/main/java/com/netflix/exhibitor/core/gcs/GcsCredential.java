@@ -1,7 +1,8 @@
 package com.netflix.exhibitor.core.gcs;
 
+import com.google.auth.oauth2.GoogleCredentials;
+
 public interface GcsCredential {
-    public String getAccountEmail();
-    public String getAccountId();
-    public String getPrivateKeyPath();
+    public GoogleCredentials getCredentials();
+    public String getProject();
 }

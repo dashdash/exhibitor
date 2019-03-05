@@ -1,11 +1,12 @@
 package com.netflix.exhibitor.core.config.gcs;
 
 import com.google.api.client.http.HttpResponseException;
-import com.google.api.services.storage.model.StorageObject;
+import com.google.cloud.storage.Blob;
 import com.netflix.exhibitor.core.config.PseudoLockBase;
 import com.netflix.exhibitor.core.gcs.GcsClient;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class GcsPseudoLock extends PseudoLockBase
@@ -48,11 +49,12 @@ public class GcsPseudoLock extends PseudoLockBase
 
     @Override
     protected List<String> getFileNames(String lockPrefix) throws Exception {
-        List<StorageObject> storageObjects = client.listObjects(bucketName, lockPrefix);
-
+        Iterable<Blob> storageObjects = client.listBlobs(bucketName, lockPrefix);
+        Iterator<Blob> it = storageObjects.iterator();
         List<String> fileNames = new ArrayList<String>();
-        for (StorageObject storageObject : storageObjects) {
-            fileNames.add(storageObject.getName());
+        while (it.hasNext()) {
+            Blob blob = it.next();
+            fileNames.add(blob.getName());
         }
 
         return fileNames;

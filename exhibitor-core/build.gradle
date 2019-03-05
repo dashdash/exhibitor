@@ -9,14 +9,21 @@ dependencies {
         // JLine pulls this in as a compile dependency, they have fixed it in future versions
         exclude group: 'junit', module: 'junit'
     }
-    compile "org.apache.curator:curator-framework:${curatorVersion}"
-    compile "org.apache.curator:curator-recipes:${curatorVersion}"
-    compile "com.netflix.servo:servo-core:${servoVersion}"
+    compile ("org.apache.curator:curator-framework:${curatorVersion}") {
+        exclude group: 'com.google.guava', module: 'guava'
+    }
+    compile ("org.apache.curator:curator-recipes:${curatorVersion}") {
+        exclude group: 'com.google.guava', module: 'guava'
+    }
+    compile ("com.netflix.servo:servo-core:${servoVersion}") {
+        exclude group: 'com.google.guava', module: 'guava'
+    }
+
     compile "com.google.guava:guava:${guavaVersion}"
     compile "javax.ws.rs:jsr311-api:${jaxRsVersion}"
     compile "org.codehaus.jackson:jackson-mapper-asl:${jacksonVersion}"
     compile "org.apache.lucene:lucene-core:${luceneVersion}"
-    
+
     compile "com.sun.jersey:jersey-client:${jerseyVersion}"
 
     // if you are using Java 7 you can remove this and switch to the JDK version
@@ -24,14 +31,17 @@ dependencies {
 
     compile "com.amazonaws:aws-java-sdk:${awsVersion}"
     compile "com.microsoft.azure:azure-storage:${azureVersion}"
-    compile "com.google.api-client:google-api-client:${googleApiVersion}"
-    compile "com.google.apis:google-api-services-storage:${googleStorageVersion}"
+    compile ("com.google.cloud:google-cloud-storage:${googleCloudStorage}") {
+        exclude group: 'com.google.guava', module: 'guava'
+    }
     compile "org.json:json:20140107"
 
     compile "com.sun.jersey:jersey-core:${jerseyVersion}"
     compile "com.sun.jersey:jersey-server:${jerseyVersion}"
     compile "com.sun.jersey:jersey-json:${jerseyVersion}"
 
-    testCompile "org.apache.curator:curator-test:${curatorVersion}"
+    testCompile ("org.apache.curator:curator-test:${curatorVersion}") {
+        exclude group: 'com.google.guava', module: 'guava'
+    }
     testCompile "org.mockito:mockito-core:${mockitoVersion}"
 }

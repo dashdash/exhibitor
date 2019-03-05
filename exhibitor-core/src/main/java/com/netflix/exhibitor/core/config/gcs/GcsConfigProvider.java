@@ -2,10 +2,11 @@ package com.netflix.exhibitor.core.config.gcs;
 
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.util.DateTime;
-import com.google.api.services.storage.model.StorageObject;
+import com.google.cloud.storage.Blob;
 import com.netflix.exhibitor.core.config.*;
 import com.netflix.exhibitor.core.gcs.GcsClient;
 import com.netflix.exhibitor.core.gcs.GcsClientFactory;
+import com.netflix.exhibitor.core.gcs.PropertyBasedGcsCredential;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -23,29 +24,25 @@ public class GcsConfigProvider implements ConfigProvider {
     public static final int HTTP_NOT_FOUND = 404;
 
     /**
-     * @param factory     the factory
-     * @param arguments   args
-     * @param hostname    this VM's hostname
+     * @param factory   the factory
+     * @param arguments args
+     * @param hostname  this VM's hostname
+     * @param defaults  default props
      * @throws Exception errors
      */
-    public GcsConfigProvider(GcsClientFactory factory, GcsConfigArguments arguments,
-                               String hostname) throws Exception {
-        this(factory, arguments, hostname, new Properties());
-    }
-
-    /**
-     * @param factory     the factory
-     * @param arguments   args
-     * @param hostname    this VM's hostname
-     * @param defaults    default props
-     * @throws Exception errors
-     */
-    public GcsConfigProvider(GcsClientFactory factory, GcsConfigArguments arguments,
-                               String hostname, Properties defaults) throws Exception {
+    public GcsConfigProvider(GcsClientFactory factory,
+                             PropertyBasedGcsCredential googleCredentials,
+                             GcsConfigArguments arguments,
+                             String hostname, Properties defaults) throws Exception {
         this.arguments = arguments;
         this.hostname = hostname;
         this.defaults = defaults;
-        gcsClient = factory.makeNewClient();
+
+        if (googleCredentials.getCredentials() != null) {
+            gcsClient = factory.makeNewClient(googleCredentials.getProject(), googleCredentials.getCredentials());
+        } else {
+            gcsClient = factory.makeNewClient(googleCredentials.getProject());
+        }
     }
 
     public GcsClient getClient() {
@@ -82,7 +79,7 @@ public class GcsConfigProvider implements ConfigProvider {
 
         Properties configObject = getConfigObject();
         if (configObject != null) {
-            lastModified = getConfigObjectMetadata().getUpdated().getValue();
+            lastModified = getConfigObjectMetadata().getUpdateTime();
             properties = configObject;
         } else {
             lastModified = new Date(0L).getTime();
@@ -96,9 +93,9 @@ public class GcsConfigProvider implements ConfigProvider {
     @Override
     public LoadedInstanceConfig storeConfig(ConfigCollection config, long compareVersion) throws Exception {
         {
-            StorageObject metadata = getConfigObjectMetadata();
-            if (metadata != null) {
-                DateTime lastModified = metadata.getUpdated();
+            Blob blob = getConfigObjectMetadata();
+            if (blob != null) {
+                DateTime lastModified = new DateTime(blob.getUpdateTime());
                 if (lastModified.getValue() != compareVersion) {
                     return null;    // pattern copied from S3ConfigProvider - Gcs may support a better way
                 }
@@ -112,15 +109,15 @@ public class GcsConfigProvider implements ConfigProvider {
         byte[] bytes = out.toByteArray();
         gcsClient.putObject(bytes, arguments.getBucketName(), arguments.getObjectName());
 
-        StorageObject metadata = getConfigObjectMetadata();
-        return new LoadedInstanceConfig(propertyBasedInstanceConfig, metadata.getUpdated().getValue());
+        Blob blob = getConfigObjectMetadata();
+        return new LoadedInstanceConfig(propertyBasedInstanceConfig, blob.getUpdateTime());
     }
 
-    private StorageObject getConfigObjectMetadata() throws Exception {
+    private Blob getConfigObjectMetadata() throws Exception {
         try {
-            StorageObject metadata = gcsClient.getObjectMetadata(arguments.getBucketName(), arguments.getObjectName());
-            if (metadata.getSize().intValue() > 0) {
-                return metadata;
+            Blob blob = gcsClient.getBlob(arguments.getBucketName(), arguments.getObjectName());
+            if (blob != null && blob.getContent().length > 0) {
+                return blob;
             }
         } catch (HttpResponseException e) {
             if (!isNotFoundError(e)) {
@@ -133,7 +130,7 @@ public class GcsConfigProvider implements ConfigProvider {
     private Properties getConfigObject() throws Exception {
         Properties props = new Properties();
         try {
-            byte[] content = gcsClient.getObject(arguments.getBucketName(), arguments.getObjectName()).toByteArray();
+            byte[] content = gcsClient.getBlobContent(arguments.getBucketName(), arguments.getObjectName());
             props.load(new ByteArrayInputStream(content));
             return props;
         } catch (HttpResponseException e) {
