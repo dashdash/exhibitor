@@ -79,7 +79,8 @@ public class GcsConfigProvider implements ConfigProvider {
 
         Properties configObject = getConfigObject();
         if (configObject != null) {
-            lastModified = getConfigObjectMetadata().getUpdateTime();
+            Blob blob = getConfigObjectMetadata();
+            lastModified = blob != null ? blob.getUpdateTime() : 0;
             properties = configObject;
         } else {
             lastModified = new Date(0L).getTime();
@@ -110,7 +111,7 @@ public class GcsConfigProvider implements ConfigProvider {
         gcsClient.putObject(bytes, arguments.getBucketName(), arguments.getObjectName());
 
         Blob blob = getConfigObjectMetadata();
-        return new LoadedInstanceConfig(propertyBasedInstanceConfig, blob.getUpdateTime());
+        return new LoadedInstanceConfig(propertyBasedInstanceConfig, blob != null ? blob.getUpdateTime() : 0);
     }
 
     private Blob getConfigObjectMetadata() throws Exception {
